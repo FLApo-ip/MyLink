@@ -1,0 +1,14 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node / Python
+node_modules/
+.venv/
+__pycache__/
+
+# Antigravity artifacts & logs
+.gemini/
+*.log

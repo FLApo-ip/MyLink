@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>마이링크 (MyLink) | 나만의 모든 링크를 한곳에</title>
+    <meta name="description" content="SNS 사용자와 크리에이터가 자신의 프로필과 여러 외부 채널 링크를 한 페이지에서 관리하고 공유할 수 있는 마이링크(MyLink) 웹 서비스입니다." />
+
+    <!-- Open Graph / 소셜 공유 최적화 메타태그 (F-08) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="마이링크 (MyLink) - 크리에이터 멀티 링크 페이지" />
+    <meta property="og:description" content="포트폴리오, 블로그, SNS 채널을 단 하나의 링크로 깔끔하게 공유하세요." />
+    <meta property="og:site_name" content="MyLink" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="마이링크 (MyLink) - 크리에이터 멀티 링크 페이지" />
+    <meta name="twitter:description" content="포트폴리오, 블로그, SNS 채널을 단 하나의 링크로 깔끔하게 공유하세요." />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- GitHub 저장소 하위 폴더 배포 호환을 위한 상대 경로 스타일시트 참조 -->
+    <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+    <div class="background-glow" aria-hidden="true"></div>
+
+    <div class="app-shell">
+        <!-- 상단 유틸리티 헤더 -->
+        <header class="top-bar">
+            <div class="brand-badge">
+                <span class="brand-dot" aria-hidden="true"></span>
+                <span class="brand-name">MyLink</span>
+            </div>
+            <div class="top-bar-actions">
+                <button type="button" id="btn-share-page" class="btn btn-ghost btn-sm" aria-label="페이지 링크 복사">
+                    <span aria-hidden="true">🔗</span>
+                    <span>공유하기</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 저장소 손상(StorageCorruptedError) 발생 시 표시되는 명시적 복구 배너 (F-02 예외 처리) -->
+        <section id="storage-error-banner" class="storage-error-banner hidden" role="alert" aria-live="assertive">
+            <div class="storage-error-content">
+                <h2 class="storage-error-title">⚠️ 저장소 데이터 손상이 감지되었습니다</h2>
+                <p id="storage-error-message" class="storage-error-desc">
+                    로컬 저장소의 데이터가 손상되어 안전을 위해 자동 덮어쓰기를 중단했습니다.
+                </p>
+                <div class="storage-error-actions">
+                    <button type="button" id="btn-reset-storage" class="btn btn-danger">
+                        초기 시드 데이터로 안전하게 초기화
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="main-content">
+            <!-- F-01. 프로필 카드 영역 -->
+            <section class="profile-section" aria-label="사용자 프로필">
+                <div class="profile-avatar-wrapper">
+                    <div id="profile-avatar" class="profile-avatar" aria-label="프로필 아이콘">🚀</div>
+                </div>
+                <h1 id="profile-name" class="profile-name">로딩 중...</h1>
+                <p id="profile-handle" class="profile-handle">@creator</p>
+                <p id="profile-bio" class="profile-bio"></p>
+
+                <!-- 요약 통계 배지 및 프로필 편집 버튼 -->
+                <div class="profile-stats-bar">
+                    <div class="stat-pill">
+                        <span class="stat-label">등록된 링크</span>
+                        <strong id="stat-total-links" class="stat-value">0</strong>
+                    </div>
+                    <div class="stat-divider" aria-hidden="true"></div>
+                    <div class="stat-pill">
+                        <span class="stat-label">누적 클릭수</span>
+                        <strong id="stat-total-clicks" class="stat-value">0</strong>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button type="button" id="btn-open-profile-modal" class="btn btn-secondary">
+                        <span aria-hidden="true">✏️</span>
+                        <span>프로필 편집</span>
+                    </button>
+                    <button type="button" id="btn-open-add-link-modal" class="btn btn-primary">
+                        <span aria-hidden="true">＋</span>
+                        <span>새 링크 추가</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- F-02 ~ F-06. 동적 링크 목록 영역 -->
+            <section class="links-section" aria-label="외부 링크 목록">
+                <div class="section-header">
+                    <h2 class="section-title">내 채널 & 링크</h2>
+                    <span class="section-hint">링크를 클릭하면 새 탭으로 이동하며 클릭수가 집계됩니다</span>
+                </div>
+
+                <!-- 링크 목록 컨테이너 -->
+                <ul id="links-list" class="links-list" aria-live="polite"></ul>
+
+                <!-- 링크가 0개일 때 표시되는 빈 상태 안내 -->
+                <div id="links-empty-state" class="links-empty-state hidden">
+                    <div class="empty-icon" aria-hidden="true">📭</div>
+                    <p class="empty-title">등록된 링크가 없습니다</p>
+                    <p class="empty-desc">상단의 <strong>'+ 새 링크 추가'</strong> 버튼을 눌러 첫 번째 링크를 등록해보세요.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Powered by <strong>MyLink</strong> · Clean OOP Architecture</p>
+        </footer>
+    </div>
+
+    <!-- =========================================================
+         모달 1: 프로필 편집 모달 (F-01)
+         ========================================================= -->
+    <div id="modal-profile" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-profile-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-profile-title" class="modal-title">프로필 편집</h2>
+                <button type="button" id="btn-close-profile-modal" class="btn-icon-close" aria-label="프로필 편집 창 닫기">✕</button>
+            </div>
+
+            <form id="form-profile" class="modal-form" novalidate>
+                <!-- 아바타 아이콘 입력 및 프리셋 선택 -->
+                <div class="form-group">
+                    <label for="input-profile-avatar" class="form-label">프로필 아이콘 (이모지)</label>
+                    <div class="icon-input-row">
+                        <input
+                            type="text"
+                            id="input-profile-avatar"
+                            name="avatar"
+                            class="form-input form-input-icon"
+                            maxlength="8"
+                            placeholder="🚀"
+                            autocomplete="off"
+                        />
+                        <div id="preset-avatar-list" class="preset-icons" role="group" aria-label="추천 프로필 이모지 선택"></div>
+                    </div>
+                    <p id="error-profile-avatar" class="field-error-message hidden" role="alert"></p>
+                </div>
+
+                <!-- 이름 입력 -->
+                <div class="form-group">
+                    <div class="label-row">
+                        <label for="input-profile-name" class="form-label">이름 <span class="required-mark">*</span></label>
+                        <span id="counter-profile-name" class="char-counter">0 / 30</span>
+                    </div>
+                    <input
+                        type="text"
+                        id="input-profile-name"
+                        name="name"
+                        class="form-input"
+                        placeholder="표시할 이름을 입력하세요 (최대 30자)"
+                        autocomplete="off"
+                    />
+                    <p id="error-profile-name" class="field-error-message hidden" role="alert"></p>
+                </div>
+
+                <!-- 한 줄 소개 입력 -->
+                <div class="form-group">
+                    <div class="label-row">
+                        <label for="input-profile-bio" class="form-label">한 줄 소개</label>
+                        <span id="counter-profile-bio" class="char-counter">0 / 100</span>
+                    </div>
+                    <textarea
+                        id="input-profile-bio"
+                        name="bio"
+                        class="form-textarea"
+                        rows="3"
+                        placeholder="방문자에게 나를 소개하는 문구를 입력하세요 (최대 100자)"
+                    ></textarea>
+                    <p id="error-profile-bio" class="field-error-message hidden" role="alert"></p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btn-cancel-profile-modal" class="btn btn-ghost">취소</button>
+                    <button type="submit" id="btn-save-profile" class="btn btn-primary">프로필 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         모달 2: 링크 추가 / 수정 모달 (F-03, F-04)
+         ========================================================= -->
+    <div id="modal-link" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-link-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-link-title" class="modal-title">새 링크 추가</h2>
+                <button type="button" id="btn-close-link-modal" class="btn-icon-close" aria-label="링크 입력 창 닫기">✕</button>
+            </div>
+
+            <form id="form-link" class="modal-form" novalidate>
+                <input type="hidden" id="input-link-id" value="" />
+
+                <!-- 대표 아이콘 선택 -->
+                <div class="form-group">
+                    <label for="input-link-icon" class="form-label">링크 아이콘 <span class="required-mark">*</span></label>
+                    <div class="icon-input-row">
+                        <input
+                            type="text"
+                            id="input-link-icon"
+                            name="icon"
+                            class="form-input form-input-icon"
+                            maxlength="8"
+                            placeholder="🔗"
+                            autocomplete="off"
+                        />
+                        <div id="preset-link-icon-list" class="preset-icons" role="group" aria-label="추천 링크 아이콘 선택"></div>
+                    </div>
+                    <p id="error-link-icon" class="field-error-message hidden" role="alert"></p>
+                </div>
+
+                <!-- 링크 제목 입력 -->
+                <div class="form-group">
+                    <label for="input-link-title" class="form-label">링크 제목 <span class="required-mark">*</span></label>
+                    <input
+                        type="text"
+                        id="input-link-title"
+                        name="title"
+                        class="form-input"
+                        placeholder="예: GitHub 공식 포트폴리오"
+                        autocomplete="off"
+                    />
+                    <p id="error-link-title" class="field-error-message hidden" role="alert"></p>
+                </div>
+
+                <!-- 링크 URL 입력 -->
+                <div class="form-group">
+                    <label for="input-link-url" class="form-label">이동할 URL 주소 <span class="required-mark">*</span></label>
+                    <input
+                        type="url"
+                        id="input-link-url"
+                        name="url"
+                        class="form-input"
+                        placeholder="https://example.com"
+                        autocomplete="off"
+                    />
+                    <p class="field-helper-text">반드시 <code>http://</code> 또는 <code>https://</code>를 포함한 전체 주소를 입력해주세요.</p>
+                    <p id="error-link-url" class="field-error-message hidden" role="alert"></p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btn-cancel-link-modal" class="btn btn-ghost">취소</button>
+                    <button type="submit" id="btn-save-link" class="btn btn-primary">저장하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         모달 3: 링크 삭제 확인 모달 (F-05)
+         ========================================================= -->
+    <div id="modal-delete" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h2 id="modal-delete-title" class="modal-title">링크 삭제 확인</h2>
+                <button type="button" id="btn-close-delete-modal" class="btn-icon-close" aria-label="삭제 확인 창 닫기">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="delete-confirm-text">
+                    선택하신 <strong id="delete-target-title" class="delete-highlight"></strong> 링크를 정말 삭제하시겠습니까?
+                </p>
+                <p class="delete-confirm-subtext">삭제된 링크와 누적된 클릭 통계는 복구할 수 없습니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btn-cancel-delete-modal" class="btn btn-ghost">취소</button>
+                <button type="button" id="btn-confirm-delete" class="btn btn-danger">삭제하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 알림 컨테이너 -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- GitHub 저장소 하위 폴더 배포 호환을 위한 상대 경로 ES Module 엔트리 -->
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>
